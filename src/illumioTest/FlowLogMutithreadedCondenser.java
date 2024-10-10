@@ -1,14 +1,8 @@
 package illumioTest;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class FlowLogMutithreadedCondenser {
 
@@ -24,10 +18,11 @@ public class FlowLogMutithreadedCondenser {
 			String tag = lineParts[2].trim();
 			lookupTable.put((port + "," + protocol).toLowerCase(), tag);
 		}
-
+		br.close();
 		return lookupTable;
 	}
 
+	//Runnable Class for multithreading
 	public static class FlowLogTask implements Runnable {
 		private List<String> logs;
 		private Map<String, String> lookupTable;
@@ -56,6 +51,7 @@ public class FlowLogMutithreadedCondenser {
 				String key = dstPort + "," + protocol;
 				String tag = lookupTable.getOrDefault(key, "Untagged");
 
+				// synchronized maps for mutual exclusion to avoid race condition
 				synchronized (tagCounts) {
 					tagCounts.put(tag, tagCounts.getOrDefault(tag, 0) + 1);
 				}
@@ -78,7 +74,9 @@ public class FlowLogMutithreadedCondenser {
 		}
 
 		ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
+		//get chunk size according to number of threads
 		int chunkSize = flowLogs.size() / numOfThreads;
+		
 
 		for (int i = 0; i < numOfThreads; i++) {
 			int start = i * chunkSize;
@@ -87,7 +85,7 @@ public class FlowLogMutithreadedCondenser {
 
 			// Submit each chunk for processing
 			FlowLogTask task = new FlowLogTask(logsChunk, lookupTable, protocolLookup, tagCounts, portProtocolCounts);
-			executor.submit(task);
+			executor.submit(task); //submit task for threads
 		}
 		br.close();
 		executor.shutdown();
@@ -134,13 +132,13 @@ public class FlowLogMutithreadedCondenser {
 
 	    File file = new File(filePath);
 	    if (!file.exists()) {
-	        return existingCounts; 
+	        return existingCounts; //return empty map
 	    }
 
 	    try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 	    	
 	        String line;
-	        reader.readLine(); 
+	        reader.readLine(); //skip header line
 
 	        while ((line = reader.readLine()) != null) {
 	            String[] parts = line.split(",");
@@ -158,12 +156,12 @@ public class FlowLogMutithreadedCondenser {
 
 	    File file = new File(filePath);
 	    if (!file.exists()) {
-	        return existingCounts; 
+	        return existingCounts; // return empty map
 	    }
 
 	    try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 	        String line;
-	        reader.readLine(); 
+	        reader.readLine(); // skip header line
 
 	        while ((line = reader.readLine()) != null) {
 	            String[] parts = line.split(",");
@@ -180,7 +178,6 @@ public class FlowLogMutithreadedCondenser {
 	        String key = entry.getKey();
 	        int newCount = entry.getValue();
 
-	        
 	        existingCounts.put(key, existingCounts.getOrDefault(key, 0) + newCount);
 	    }
 	}
@@ -196,6 +193,8 @@ public class FlowLogMutithreadedCondenser {
 	public static void main(String[] args) throws IOException {
 		
 		String configFilePath = "D:\\pj\\illumio\\src\\illumioTest\\config.properties";
+		
+		// get filepaths from config
         Properties properties = loadProperties(configFilePath);
         
 		String lookupTablePath = properties.getProperty("lookupTablePath");
@@ -208,6 +207,7 @@ public class FlowLogMutithreadedCondenser {
 		Map<String, Integer> tagCounts = new HashMap<>();
 		Map<String, Integer> portProtocolCounts = new HashMap<>();
 		
+		// fetch existing input
 		Map<String,Integer> existingTagCounts=loadExistingTagCounts(outputTagCountsFile);
 		Map<String,Integer> existingPortProtocolCounts=loadExistingProtocolCounts(outputPortProtocolFile);
 
@@ -216,9 +216,11 @@ public class FlowLogMutithreadedCondenser {
 
 		parseFlowLogs(flowLogPath, lookupTable, protocolLookup, tagCounts, portProtocolCounts, numThreads);
 		
+		//merge existing with new counts
 		mergeCounts(existingTagCounts, tagCounts);
         mergeCounts(existingPortProtocolCounts, portProtocolCounts);
 
+      //write to files
 		writeTagCountsToFile(existingTagCounts, outputTagCountsFile);
 		writePortProtocolCounts(existingPortProtocolCounts, outputPortProtocolFile);
 
