@@ -44,7 +44,7 @@ outputPortProtocolFile=/your/path/here/AWS-Flowlogs-Parser/port_protocol_counts.
 
 ### Modifying `config.properties` path in main function:
 ```bash
-String configFilePath = "/your/path/here/AWS-Flowlogs-Parser/config.properties";
+String configFilePath = "/your/path/here/AWS-Flowlogs-Parser/src/illumioTest/config.properties";
 ```
 
 Make sure the paths are valid for your operating system. Additionally the user should have access permissions for this path to create new files and access existing ones.
