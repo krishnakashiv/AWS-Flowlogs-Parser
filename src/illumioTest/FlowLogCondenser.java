@@ -16,9 +16,9 @@ public class FlowLogCondenser {
 			String port = lineParts[0].trim();
 			String protocol = lineParts[1].trim();
 			String tag = lineParts[2].trim();
-			lookupTable.put((port + "," + protocol).toLowerCase(), tag);
+			lookupTable.put((port + "," + protocol).toLowerCase(), tag); //Case insensitive
 		}
-
+		br.close();
 		return lookupTable;
 	}
 
@@ -39,8 +39,9 @@ public class FlowLogCondenser {
 			tagCounts.put(tag, tagCounts.getOrDefault(tag, 0) + 1);
 
 			portProtocolCounts.put(key, portProtocolCounts.getOrDefault(key, 0) + 1);
-
+			
 		}
+		br.close();
 
 	}
 
@@ -77,13 +78,13 @@ public class FlowLogCondenser {
 
 	    File file = new File(filePath);
 	    if (!file.exists()) {
-	        return existingCounts; 
+	        return existingCounts; //return empty map
 	    }
 
 	    try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 	    	
 	        String line;
-	        reader.readLine(); 
+	        reader.readLine(); //skip header line
 
 	        while ((line = reader.readLine()) != null) {
 	            String[] parts = line.split(",");
@@ -101,12 +102,12 @@ public class FlowLogCondenser {
 
 	    File file = new File(filePath);
 	    if (!file.exists()) {
-	        return existingCounts; 
+	        return existingCounts; //return empty map
 	    }
 
 	    try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 	        String line;
-	        reader.readLine(); 
+	        reader.readLine(); //skip header line
 
 	        while ((line = reader.readLine()) != null) {
 	            String[] parts = line.split(",");
@@ -124,7 +125,6 @@ public class FlowLogCondenser {
 	        String key = entry.getKey();
 	        int newCount = entry.getValue();
 
-	        
 	        existingCounts.put(key, existingCounts.getOrDefault(key, 0) + newCount);
 	    }
 	}
@@ -141,6 +141,8 @@ public class FlowLogCondenser {
 		String configFilePath = "D:\\pj\\illumio\\src\\illumioTest\\config.properties";
         Properties properties = loadProperties(configFilePath);
         
+        // get filepaths from config
+        
 		String lookupTablePath = properties.getProperty("lookupTablePath");
 		String flowLogPath =  properties.getProperty("flowLogPath");
 		String outputTagCountsFile = properties.getProperty("outputTagCountsFile");
@@ -151,14 +153,17 @@ public class FlowLogCondenser {
 		Map<String, Integer> tagCounts = new HashMap<>();
 		Map<String, Integer> portProtocolCounts = new HashMap<>();
 
-		Map<String,Integer> existingTagCounts=loadExistingTagCounts(outputTagCountsFile);
+		// fetch existing input
+		Map<String,Integer> existingTagCounts=loadExistingTagCounts(outputTagCountsFile); 
 		Map<String,Integer> existingPortProtocolCounts=loadExistingProtocolCounts(outputPortProtocolFile);
 		
 		parseFlowLogs(flowLogPath, lookupTable, protocolLookup, tagCounts, portProtocolCounts);
 
+		//merge existing with new counts
 		mergeCounts(existingTagCounts, tagCounts);
         mergeCounts(existingPortProtocolCounts, portProtocolCounts);
 
+        //write to files
 		writeTagCountsToFile(existingTagCounts, outputTagCountsFile);
 		writePortProtocolCounts(existingPortProtocolCounts, outputPortProtocolFile);
 
