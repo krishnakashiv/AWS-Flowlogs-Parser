@@ -115,6 +115,7 @@ The main functionalities of the code include:
      - Divides the log entries into chunks based on the number of threads `numThreads` specified.
      - For each chunk, a separate thread (instance of `FlowLogTask`) is created and submitted for processing.
      - Each thread extracts the destination port and protocol, looks up the corresponding tag, and updates the same two maps (`tagCounts` and `portProtocolCounts`) in a thread-safe manner using synchronization to avoid race conditions.
+     - Optimized for handling large-scale flow logs efficiently.
 
 3. **Writing Counts to Files**:
    - `writeTagCountsToFile`: Writes tag counts to a CSV file.
