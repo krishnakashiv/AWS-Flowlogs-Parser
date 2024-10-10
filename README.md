@@ -42,7 +42,7 @@ outputTagCountsFile=/your/path/here/AWS-Flowlogs-Parser/tag-counts.csv
 outputPortProtocolFile=/your/path/here/AWS-Flowlogs-Parser/port_protocol_counts.csv
 ```
 
-### Modifying `config.properties` in main function:
+### Modifying `config.properties` path in main function:
 ```bash
 String configFilePath = "/your/path/here/AWS-Flowlogs-Parser/config.properties";
 ```
