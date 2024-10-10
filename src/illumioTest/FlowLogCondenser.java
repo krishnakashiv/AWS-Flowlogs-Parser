@@ -138,7 +138,7 @@ public class FlowLogCondenser {
     }
 
 	public static void main(String[] args) throws IOException {
-		String configFilePath = "D:\\pj\\illumio\\src\\illumioTest\\config.properties";
+		String configFilePath = "/home/krishna/AWS-Flowlogs-Parser/src/illumioTest/config.properties";
         Properties properties = loadProperties(configFilePath);
         
         // get filepaths from config
